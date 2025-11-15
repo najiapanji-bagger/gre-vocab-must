@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GRE Vocab Trainer - Barron & Magoosh</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #222;
+      background: #f5f5f5;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+    .app {
+      margin: 24px;
+      max-width: 900px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px 24px 32px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+      box-sizing: border-box;
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 1.9rem;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+    label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #555;
+    }
+    select {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #ddd;
+      font-size: 0.9rem;
+      background: #fafafa;
+      min-width: 140px;
+    }
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: #f1f1f1;
+      font-size: 0.8rem;
+      margin-right: 6px;
+    }
+    .section-title {
+      font-size: 1.1rem;
+      margin-top: 18px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .card {
+      background: #fafafa;
+      border-radius: 12px;
+      padding: 14px 16px;
+      border: 1px solid #e0e0e0;
+      margin-bottom: 12px;
+    }
+    .word-list {
+      max-height: 350px;
+      overflow-y: auto;
+      padding-right: 4px;
+      font-size: 0.9rem;
+    }
+    .word-item {
+      margin-bottom: 6px;
+    }
+    .word-item strong {
+      font-weight: 600;
+    }
+    .quiz-meta {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    .quiz-prompt {
+      font-size: 1.05rem;
+      margin-bottom: 10px;
+    }
+    .options {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    @media (min-width: 600px) {
+      .options {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .btn {
+      border-radius: 999px;
+      padding: 8px 14px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s ease, transform 0.05s ease, opacity 0.2s ease;
+    }
+    .btn-primary {
+      background: #2196f3;
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #1976d2;
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: #eee;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background: #e0e0e0;
+      transform: translateY(-1px);
+    }
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    .option-btn {
+      border-radius: 999px;
+      border: 1px solid #ddd;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      background: #fff;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s ease, transform 0.05s ease, border-color 0.15s ease;
+    }
+    .option-btn:hover {
+      background: #f7f7f7;
+      transform: translateY(-1px);
+    }
+    .option-btn.correct {
+      background: #e8f5e9;
+      border-color: #4caf50;
+      color: #1b5e20;
+      font-weight: 600;
+    }
+    .option-btn.incorrect {
+      background: #ffebee;
+      border-color: #f44336;
+      color: #b71c1c;
+    }
+    .feedback {
+      min-height: 20px;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+    .feedback.ok {
+      color: #2e7d32;
+      font-weight: 600;
+    }
+    .feedback.bad {
+      color: #c62828;
+      font-weight: 600;
+    }
+    .quiz-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 0.9rem;
+    }
+    .text-input {
+      width: 100%;
+      border-radius: 999px;
+      border: 1px solid #ddd;
+      padding: 8px 12px;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+      margin-bottom: 8px;
+    }
+    .text-input:focus {
+      border-color: #2196f3;
+      outline: none;
+    }
+    .hint {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>GRE Vocab Trainer</h1>
+    <div class="subtitle">
+      Pilih sumber (<strong>Barron</strong> / <strong>Magoosh</strong>), latih 100 kata per hari, dan pakai quiz untuk hafalan.
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="sourceSelect">Source</label><br>
+        <select id="sourceSelect">
+          <option value="barron">Barron (800)</option>
+          <option value="magoosh">Magoosh (1000)</option>
+        </select>
+      </div>
+      <div>
+        <label for="daySelect">Day (100 words)</label><br>
+        <select id="daySelect"></select>
+      </div>
+      <div>
+        <label for="quizMode">Quiz mode</label><br>
+        <select id="quizMode">
+          <option value="meaningToWord">Meaning ➜ choose word</option>
+          <option value="wordToMeaning">Word ➜ choose meaning</option>
+          <option value="typeWord">Meaning ➜ type the word</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="pill" id="sourceInfo">Loading data…</span>
+      <span class="pill" id="dayInfo"></span>
+    </div>
+
+    <div class="section-title">Daily word list (100)</div>
+    <div class="card">
+      <div id="wordList" class="word-list">
+        Waiting for data…
+      </div>
+    </div>
+
+    <div class="section-title">Quiz</div>
+    <div class="card">
+      <div class="quiz-meta" id="quizMeta">Press “Start quiz” to begin.</div>
+      <div class="quiz-prompt" id="quizPrompt"></div>
+
+      <div id="quizOptions" class="options"></div>
+      <input id="quizInput" class="text-input" type="text" placeholder="Type your answer…" style="display:none">
+      <div class="feedback" id="quizFeedback"></div>
+      <div id="quizAnswer" class="hint"></div>
+
+      <div class="quiz-footer">
+        <div>
+          <button id="startBtn" class="btn btn-secondary" type="button">Start quiz</button>
+          <button id="nextBtn" class="btn btn-primary" type="button" disabled>Next ▶</button>
+        </div>
+        <div>
+          <span id="quizCounter">Q 0 / 0</span> ·
+          <span id="quizScore">Score: 0</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  
+  <script src="gre_words_data.js"></script>
+  <script>
+    const WORDS_PER_DAY = 100;
+    const SETTINGS_KEY = 'gre_vocab_settings_v1';
+
+    const dataStore = {
+      barron: (typeof BARRON_WORDS !== 'undefined') ? BARRON_WORDS : [],
+      magoosh: (typeof MAGOOSH_WORDS !== 'undefined') ? MAGOOSH_WORDS : []
+    };
+
+    const savedSettings = (function () {
+      try {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    })();
+
+    const state = {
+      source: (savedSettings && savedSettings.source) || 'barron',
+      day: (savedSettings && savedSettings.day) || 1,
+      quizMode: (savedSettings && savedSettings.quizMode) || 'meaningToWord',
+      quizPool: [],
+      quizOrder: [],
+      quizIndex: 0,
+      quizScore: 0,
+      quizAnswered: false
+    };
+
+    const els = {
+      sourceSelect: document.getElementById('sourceSelect'),
+      daySelect: document.getElementById('daySelect'),
+      quizMode: document.getElementById('quizMode'),
+      sourceInfo: document.getElementById('sourceInfo'),
+      dayInfo: document.getElementById('dayInfo'),
+      wordList: document.getElementById('wordList'),
+      quizMeta: document.getElementById('quizMeta'),
+      quizPrompt: document.getElementById('quizPrompt'),
+      quizOptions: document.getElementById('quizOptions'),
+      quizInput: document.getElementById('quizInput'),
+      quizFeedback: document.getElementById('quizFeedback'),
+      quizAnswer: document.getElementById('quizAnswer'),
+      startBtn: document.getElementById('startBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      quizCounter: document.getElementById('quizCounter'),
+      quizScore: document.getElementById('quizScore')
+    };
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function saveSettings() {
+      try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+          source: state.source,
+          day: state.day,
+          quizMode: state.quizMode
+        }));
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    function initUI() {
+      // initialise select values from state
+      els.sourceSelect.value = state.source;
+      els.quizMode.value = state.quizMode;
+
+      updateSourceInfo();
+      populateDaySelect();
+      // clamp day within range
+      const list = dataStore[state.source] || [];
+      const days = Math.max(1, Math.ceil(list.length / WORDS_PER_DAY));
+      if (state.day < 1) state.day = 1;
+      if (state.day > days) state.day = days;
+      els.daySelect.value = String(state.day);
+
+      updateDayInfo();
+      renderWordList();
+      saveSettings();
+
+      els.sourceSelect.addEventListener('change', () => {
+        state.source = els.sourceSelect.value;
+        state.day = 1;
+        populateDaySelect();
+        els.daySelect.value = String(state.day);
+        updateSourceInfo();
+        updateDayInfo();
+        renderWordList();
+        resetQuiz();
+        saveSettings();
+      });
+
+      els.daySelect.addEventListener('change', () => {
+        state.day = parseInt(els.daySelect.value, 10) || 1;
+        updateDayInfo();
+        renderWordList();
+        resetQuiz();
+        saveSettings();
+      });
+
+      els.quizMode.addEventListener('change', () => {
+        state.quizMode = els.quizMode.value;
+        resetQuiz();
+        saveSettings();
+      });
+
+      els.startBtn.addEventListener('click', () => {
+        startQuiz();
+      });
+
+      els.nextBtn.addEventListener('click', () => {
+        nextQuestion();
+      });
+
+      els.quizInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          if (!state.quizAnswered) {
+            checkTypedAnswer();
+          } else {
+            nextQuestion();
+          }
+        }
+      });
+
+      els.quizOptions.addEventListener('click', (e) => {
+        if (e.target.classList.contains('option-btn')) {
+          handleOptionClick(e.target);
+        }
+      });
+    }
+
+    function updateSourceInfo() {
+      const list = dataStore[state.source] || [];
+      const label = state.source === 'barron' ? 'Barron' : 'Magoosh';
+      els.sourceInfo.textContent = label + ' – ' + list.length + ' words';
+    }
+
+    function populateDaySelect() {
+      const list = dataStore[state.source] || [];
+      const days = Math.max(1, Math.ceil(list.length / WORDS_PER_DAY));
+      els.daySelect.innerHTML = '';
+      for (let d = 1; d <= days; d++) {
+        const opt = document.createElement('option');
+        opt.value = String(d);
+        opt.textContent = 'Day ' + d;
+        els.daySelect.appendChild(opt);
+      }
+    }
+
+    function updateDayInfo() {
+      const list = dataStore[state.source] || [];
+      const days = Math.max(1, Math.ceil(list.length / WORDS_PER_DAY));
+      const safeDay = Math.min(Math.max(state.day, 1), days);
+      state.day = safeDay;
+      els.dayInfo.textContent = 'Day ' + safeDay + ' of ' + days + ' (≈ ' + WORDS_PER_DAY + ' words)';
+    }
+
+    function getCurrentDaySlice() {
+      const list = dataStore[state.source] || [];
+      const start = (state.day - 1) * WORDS_PER_DAY;
+      const end = Math.min(start + WORDS_PER_DAY, list.length);
+      return list.slice(start, end);
+    }
+
+    function renderWordList() {
+      const slice = getCurrentDaySlice();
+      if (!slice.length) {
+        els.wordList.textContent = 'No data loaded yet.';
+        return;
+      }
+      const items = slice.map((w, idx) => {
+        return '<div class="word-item"><strong>' + (idx + 1) + '. ' + escapeHtml(w.term) +
+          '</strong> – ' + escapeHtml(w.definition) + '</div>';
+      });
+      els.wordList.innerHTML = items.join('');
+    }
+
+    function resetQuiz() {
+      state.quizPool = [];
+      state.quizOrder = [];
+      state.quizIndex = 0;
+      state.quizScore = 0;
+      state.quizAnswered = false;
+
+      els.quizMeta.textContent = 'Press “Start quiz” to begin.';
+      els.quizPrompt.textContent = '';
+      els.quizOptions.innerHTML = '';
+      els.quizInput.style.display = 'none';
+      els.quizInput.value = '';
+      els.quizFeedback.textContent = '';
+      els.quizFeedback.className = 'feedback';
+      els.quizAnswer.textContent = '';
+      els.quizCounter.textContent = 'Q 0 / 0';
+      els.quizScore.textContent = 'Score: 0';
+      els.nextBtn.disabled = true;
+    }
+
+    function startQuiz() {
+      const slice = getCurrentDaySlice();
+      if (!slice.length) {
+        els.quizMeta.textContent = 'No words to quiz. Check your source/day.';
+        return;
+      }
+      state.quizPool = slice;
+      state.quizOrder = shuffle(slice.map((_, idx) => idx));
+      state.quizIndex = 0;
+      state.quizScore = 0;
+      state.quizAnswered = false;
+      els.quizScore.textContent = 'Score: 0';
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      if (!state.quizPool.length || !state.quizOrder.length) {
+        resetQuiz();
+        return;
+      }
+      if (state.quizIndex >= state.quizOrder.length) {
+        els.quizMeta.textContent = 'Done! 🎉';
+        els.quizPrompt.textContent = 'You finished all questions for this day.';
+        els.quizOptions.innerHTML = '';
+        els.quizInput.style.display = 'none';
+        els.quizFeedback.textContent = '';
+        els.quizAnswer.textContent = '';
+        els.quizCounter.textContent = 'Q ' + state.quizOrder.length + ' / ' + state.quizOrder.length;
+        els.nextBtn.disabled = true;
+        return;
+      }
+
+      state.quizAnswered = false;
+      const qIdx = state.quizOrder[state.quizIndex];
+      const word = state.quizPool[qIdx];
+
+      els.quizMeta.textContent = 'Question ' + (state.quizIndex + 1) + ' of ' + state.quizOrder.length;
+      els.quizCounter.textContent = 'Q ' + (state.quizIndex + 1) + ' / ' + state.quizOrder.length;
+      els.quizFeedback.textContent = '';
+      els.quizFeedback.className = 'feedback';
+      els.quizAnswer.textContent = '';
+
+      if (state.quizMode === 'meaningToWord') {
+        els.quizPrompt.textContent = word.definition;
+        els.quizInput.style.display = 'none';
+        renderOptions(word, 'word');
+      } else if (state.quizMode === 'wordToMeaning') {
+        els.quizPrompt.textContent = word.term;
+        els.quizInput.style.display = 'none';
+        renderOptions(word, 'definition');
+      } else {
+        els.quizPrompt.textContent = word.definition;
+        els.quizOptions.innerHTML = '';
+        els.quizInput.style.display = 'block';
+        els.quizInput.value = '';
+        els.quizInput.focus();
+      }
+
+      els.nextBtn.disabled = (state.quizMode === 'typeWord');
+    }
+
+    function renderOptions(correctWord, type) {
+      const pool = state.quizPool;
+      const correctIdxInPool = pool.indexOf(correctWord);
+      const indices = pool.map((_, idx) => idx).filter(idx => idx !== correctIdxInPool);
+      const wrongIndices = shuffle(indices).slice(0, 3);
+      const allIndices = shuffle([correctIdxInPool, ...wrongIndices]);
+
+      els.quizOptions.innerHTML = '';
+      allIndices.forEach(idx => {
+        const w = pool[idx];
+        const value = type === 'word' ? w.term : w.definition;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'option-btn';
+        btn.dataset.correct = (idx === correctIdxInPool) ? '1' : '0';
+        btn.textContent = value;
+        els.quizOptions.appendChild(btn);
+      });
+    }
+
+    function handleOptionClick(btn) {
+      if (state.quizAnswered) return;
+      state.quizAnswered = true;
+
+      const isCorrect = btn.dataset.correct === '1';
+      const buttons = els.quizOptions.querySelectorAll('.option-btn');
+      buttons.forEach(b => {
+        b.disabled = true;
+        if (b.dataset.correct === '1') {
+          b.classList.add('correct');
+        }
+      });
+
+      if (!isCorrect) {
+        btn.classList.add('incorrect');
+      } else {
+        state.quizScore += 1;
+      }
+
+      const qIdx = state.quizOrder[state.quizIndex];
+      const word = state.quizPool[qIdx];
+
+      els.quizScore.textContent = 'Score: ' + state.quizScore;
+      els.quizFeedback.textContent = isCorrect ? '✅ Correct!' : '❌ Not quite.';
+      els.quizFeedback.className = 'feedback ' + (isCorrect ? 'ok' : 'bad');
+      els.quizAnswer.textContent = 'Answer: ' + word.term + ' – ' + word.definition;
+
+      els.nextBtn.disabled = false;
+    }
+
+    function checkTypedAnswer() {
+      if (state.quizAnswered) return;
+      state.quizAnswered = true;
+
+      const qIdx = state.quizOrder[state.quizIndex];
+      const word = state.quizPool[qIdx];
+
+      const userAns = (els.quizInput.value || '').trim().toLowerCase();
+      const correct = (word.term || '').trim().toLowerCase();
+      const isCorrect = userAns && userAns === correct;
+
+      if (isCorrect) {
+        state.quizScore += 1;
+      }
+
+      els.quizScore.textContent = 'Score: ' + state.quizScore;
+      els.quizFeedback.textContent = isCorrect ? '✅ Correct!' : '❌ Not quite.';
+      els.quizFeedback.className = 'feedback ' + (isCorrect ? 'ok' : 'bad');
+      els.quizAnswer.textContent = 'Answer: ' + word.term + ' – ' + word.definition;
+
+      els.nextBtn.disabled = false;
+    }
+
+    function nextQuestion() {
+      if (!state.quizPool.length) return;
+      if (state.quizMode === 'typeWord' && !state.quizAnswered) {
+        checkTypedAnswer();
+        return;
+      }
+      state.quizIndex += 1;
+      renderQuestion();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    window.addEventListener('DOMContentLoaded', initUI);
+  </script>
+
+</body>
+</html>
