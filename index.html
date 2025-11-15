@@ -91,6 +91,27 @@
     .word-item strong {
       font-weight: 600;
     }
+    .badge {
+      display: inline-block;
+      margin-left: 4px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .badge-new {
+      background: #e3f2fd;
+      color: #0d47a1;
+    }
+    .badge-needs {
+      background: #fff3e0;
+      color: #e65100;
+    }
+    .badge-mastered {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
     .quiz-meta {
       font-size: 0.9rem;
       color: #555;
@@ -189,6 +210,7 @@
       gap: 10px;
       flex-wrap: wrap;
       font-size: 0.9rem;
+      margin-top: 6px;
     }
     .text-input {
       width: 100%;
@@ -207,6 +229,71 @@
       font-size: 0.8rem;
       color: #888;
       margin-top: 4px;
+    }
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 4px;
+      margin-bottom: 2px;
+      font-size: 0.85rem;
+      flex-wrap: wrap;
+    }
+    .status-chip {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #eee;
+    }
+    .status-chip.status-new {
+      background: #e3f2fd;
+      color: #0d47a1;
+    }
+    .status-chip.status-needs {
+      background: #fff3e0;
+      color: #e65100;
+    }
+    .status-chip.status-mastered {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .status-buttons .btn {
+      padding: 4px 10px;
+      font-size: 0.8rem;
+    }
+    /* Dashboard */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .dash-card {
+      background: #fafafa;
+      border-radius: 12px;
+      border: 1px solid #e0e0e0;
+      padding: 10px 12px;
+      font-size: 0.85rem;
+    }
+    .dash-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #555;
+    }
+    .dash-line {
+      margin-bottom: 2px;
+    }
+    .dash-tag-new {
+      color: #0d47a1;
+      font-weight: 600;
+    }
+    .dash-tag-needs {
+      color: #e65100;
+      font-weight: 600;
+    }
+    .dash-tag-mastered {
+      color: #2e7d32;
+      font-weight: 600;
     }
   </style>
 </head>
@@ -244,6 +331,32 @@
       <span class="pill" id="dayInfo"></span>
     </div>
 
+    <!-- DASHBOARD SUMMARY -->
+    <div class="dashboard">
+      <div class="dash-card">
+        <div class="dash-title">Source summary</div>
+        <div class="dash-line">
+          Total words: <span id="srcTotal">0</span>
+        </div>
+        <div class="dash-line">
+          <span class="dash-tag-new">New:</span> <span id="srcNew">0</span> ·
+          <span class="dash-tag-needs">Needs work:</span> <span id="srcNeeds">0</span> ·
+          <span class="dash-tag-mastered">Mastered:</span> <span id="srcMastered">0</span>
+        </div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-title">Today (this day)</div>
+        <div class="dash-line">
+          Total words: <span id="dayTotal">0</span>
+        </div>
+        <div class="dash-line">
+          <span class="dash-tag-new">New:</span> <span id="dayNew">0</span> ·
+          <span class="dash-tag-needs">Needs work:</span> <span id="dayNeeds">0</span> ·
+          <span class="dash-tag-mastered">Mastered:</span> <span id="dayMastered">0</span>
+        </div>
+      </div>
+    </div>
+
     <div class="section-title">Daily word list (100)</div>
     <div class="card">
       <div id="wordList" class="word-list">
@@ -261,6 +374,15 @@
       <div class="feedback" id="quizFeedback"></div>
       <div id="quizAnswer" class="hint"></div>
 
+      <div class="status-row">
+        <span id="statusText" class="status-chip">Status: -</span>
+        <div class="status-buttons">
+          <button type="button" class="btn btn-secondary btn-status" data-status="new">New</button>
+          <button type="button" class="btn btn-secondary btn-status" data-status="needsWork">Needs work</button>
+          <button type="button" class="btn btn-secondary btn-status" data-status="mastered">Mastered</button>
+        </div>
+      </div>
+
       <div class="quiz-footer">
         <div>
           <button id="startBtn" class="btn btn-secondary" type="button">Start quiz</button>
@@ -275,11 +397,11 @@
 
   </div>
 
-  
   <script src="gre_words_data.js"></script>
   <script>
     const WORDS_PER_DAY = 100;
     const SETTINGS_KEY = 'gre_vocab_settings_v1';
+    const PROGRESS_KEY = 'gre_vocab_progress_v1';
 
     const dataStore = {
       barron: (typeof BARRON_WORDS !== 'undefined') ? BARRON_WORDS : [],
@@ -292,6 +414,15 @@
         return raw ? JSON.parse(raw) : null;
       } catch (e) {
         return null;
+      }
+    })();
+
+    let progressStore = (function () {
+      try {
+        const raw = localStorage.getItem(PROGRESS_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        return {};
       }
     })();
 
@@ -322,7 +453,17 @@
       startBtn: document.getElementById('startBtn'),
       nextBtn: document.getElementById('nextBtn'),
       quizCounter: document.getElementById('quizCounter'),
-      quizScore: document.getElementById('quizScore')
+      quizScore: document.getElementById('quizScore'),
+      statusText: document.getElementById('statusText'),
+      statusButtons: document.querySelectorAll('.btn-status'),
+      srcTotal: document.getElementById('srcTotal'),
+      srcNew: document.getElementById('srcNew'),
+      srcNeeds: document.getElementById('srcNeeds'),
+      srcMastered: document.getElementById('srcMastered'),
+      dayTotal: document.getElementById('dayTotal'),
+      dayNew: document.getElementById('dayNew'),
+      dayNeeds: document.getElementById('dayNeeds'),
+      dayMastered: document.getElementById('dayMastered')
     };
 
     function shuffle(arr) {
@@ -341,19 +482,148 @@
           day: state.day,
           quizMode: state.quizMode
         }));
-      } catch (e) {
-        // ignore
+      } catch (e) {}
+    }
+
+    function saveProgressStore() {
+      try {
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify(progressStore));
+      } catch (e) {}
+    }
+
+    function progressKey(source, term) {
+      return source + ':' + String(term || '').toLowerCase();
+    }
+
+    function getWordProgress(source, term) {
+      const key = progressKey(source, term);
+      const existing = progressStore[key];
+      if (existing && existing.status) return existing;
+      return {
+        status: 'new',
+        correctStreak: 0,
+        attempts: 0,
+        correct: 0,
+        lastSeen: null
+      };
+    }
+
+    function setWordProgress(source, term, patch) {
+      const key = progressKey(source, term);
+      const base = getWordProgress(source, term);
+      progressStore[key] = Object.assign({}, base, patch);
+      saveProgressStore();
+    }
+
+    function statusLabel(progress) {
+      const st = progress.status || 'new';
+      if (st === 'needsWork') return 'Needs work';
+      if (st === 'mastered') return 'Mastered';
+      return 'New';
+    }
+
+    function renderStatusChip(word) {
+      if (!word) {
+        els.statusText.textContent = 'Status: -';
+        els.statusText.className = 'status-chip';
+        return;
       }
+      const prog = getWordProgress(state.source, word.term);
+      const label = statusLabel(prog);
+      els.statusText.textContent = 'Status: ' + label;
+      let cls = 'status-chip';
+      if (prog.status === 'new') cls += ' status-new';
+      else if (prog.status === 'needsWork') cls += ' status-needs';
+      else if (prog.status === 'mastered') cls += ' status-mastered';
+      els.statusText.className = cls;
+    }
+
+    function updateWordProgressAfterAnswer(word, isCorrect) {
+      if (!word) return;
+      const prev = getWordProgress(state.source, word.term);
+      let status = prev.status || 'new';
+      let streak = prev.correctStreak || 0;
+      let attempts = (prev.attempts || 0) + 1;
+      let correct = prev.correct || 0;
+
+      if (isCorrect) {
+        streak += 1;
+        correct += 1;
+        if (status === 'new') status = 'needsWork';
+        if (streak >= 3) status = 'mastered';
+      } else {
+        streak = 0;
+        status = 'needsWork';
+      }
+
+      setWordProgress(state.source, word.term, {
+        status,
+        correctStreak: streak,
+        attempts,
+        correct,
+        lastSeen: Date.now()
+      });
+      updateDashboard();
+    }
+
+    function setManualStatus(newStatus) {
+      const word = getCurrentQuizWord();
+      if (!word) return;
+      setWordProgress(state.source, word.term, {
+        status: newStatus,
+        lastSeen: Date.now()
+      });
+      renderStatusChip(word);
+      updateDashboard();
+      renderWordList();
+    }
+
+    function getCurrentQuizWord() {
+      if (!state.quizPool.length || !state.quizOrder.length) return null;
+      if (state.quizIndex >= state.quizOrder.length) return null;
+      const qIdx = state.quizOrder[state.quizIndex];
+      return state.quizPool[qIdx];
+    }
+
+    function computeCountsForWords(words) {
+      let total = words.length;
+      let cNew = 0;
+      let cNeeds = 0;
+      let cMastered = 0;
+      words.forEach(w => {
+        const p = getWordProgress(state.source, w.term);
+        if (p.status === 'needsWork') cNeeds++;
+        else if (p.status === 'mastered') cMastered++;
+        else cNew++;
+      });
+      return { total, cNew, cNeeds, cMastered };
+    }
+
+    function updateDashboard() {
+      const allWords = dataStore[state.source] || [];
+      const srcCounts = computeCountsForWords(allWords);
+      const dayWords = getCurrentDaySlice();
+      const dayCounts = computeCountsForWords(dayWords);
+
+      els.srcTotal.textContent = srcCounts.total;
+      els.srcNew.textContent = srcCounts.cNew;
+      els.srcNeeds.textContent = srcCounts.cNeeds;
+      els.srcMastered.textContent = srcCounts.cMastered;
+
+      els.dayTotal.textContent = dayCounts.total;
+      els.dayNew.textContent = dayCounts.cNew;
+      els.dayNeeds.textContent = dayCounts.cNeeds;
+      els.dayMastered.textContent = dayCounts.cMastered;
     }
 
     function initUI() {
-      // initialise select values from state
+      // initial select values from state
       els.sourceSelect.value = state.source;
       els.quizMode.value = state.quizMode;
 
       updateSourceInfo();
       populateDaySelect();
-      // clamp day within range
+
       const list = dataStore[state.source] || [];
       const days = Math.max(1, Math.ceil(list.length / WORDS_PER_DAY));
       if (state.day < 1) state.day = 1;
@@ -362,6 +632,7 @@
 
       updateDayInfo();
       renderWordList();
+      updateDashboard();
       saveSettings();
 
       els.sourceSelect.addEventListener('change', () => {
@@ -373,6 +644,7 @@
         updateDayInfo();
         renderWordList();
         resetQuiz();
+        updateDashboard();
         saveSettings();
       });
 
@@ -381,6 +653,7 @@
         updateDayInfo();
         renderWordList();
         resetQuiz();
+        updateDashboard();
         saveSettings();
       });
 
@@ -413,6 +686,16 @@
           handleOptionClick(e.target);
         }
       });
+
+      els.statusButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const st = btn.dataset.status;
+          setManualStatus(st);
+        });
+      });
+
+      const firstSlice = getCurrentDaySlice();
+      renderStatusChip(firstSlice[0] || null);
     }
 
     function updateSourceInfo() {
@@ -452,13 +735,20 @@
       const slice = getCurrentDaySlice();
       if (!slice.length) {
         els.wordList.textContent = 'No data loaded yet.';
+        updateDashboard();
         return;
       }
       const items = slice.map((w, idx) => {
+        const prog = getWordProgress(state.source, w.term);
+        let badgeClass = 'badge-new';
+        if (prog.status === 'needsWork') badgeClass = 'badge-needs';
+        else if (prog.status === 'mastered') badgeClass = 'badge-mastered';
+        const badge = '<span class="badge ' + badgeClass + '">' + statusLabel(prog) + '</span>';
         return '<div class="word-item"><strong>' + (idx + 1) + '. ' + escapeHtml(w.term) +
-          '</strong> – ' + escapeHtml(w.definition) + '</div>';
+          '</strong> ' + badge + ' – ' + escapeHtml(w.definition) + '</div>';
       });
       els.wordList.innerHTML = items.join('');
+      updateDashboard();
     }
 
     function resetQuiz() {
@@ -479,6 +769,8 @@
       els.quizCounter.textContent = 'Q 0 / 0';
       els.quizScore.textContent = 'Score: 0';
       els.nextBtn.disabled = true;
+
+      renderStatusChip(null);
     }
 
     function startQuiz() {
@@ -510,12 +802,12 @@
         els.quizAnswer.textContent = '';
         els.quizCounter.textContent = 'Q ' + state.quizOrder.length + ' / ' + state.quizOrder.length;
         els.nextBtn.disabled = true;
+        renderStatusChip(null);
         return;
       }
 
       state.quizAnswered = false;
-      const qIdx = state.quizOrder[state.quizIndex];
-      const word = state.quizPool[qIdx];
+      const word = getCurrentQuizWord();
 
       els.quizMeta.textContent = 'Question ' + (state.quizIndex + 1) + ' of ' + state.quizOrder.length;
       els.quizCounter.textContent = 'Q ' + (state.quizIndex + 1) + ' / ' + state.quizOrder.length;
@@ -540,6 +832,7 @@
       }
 
       els.nextBtn.disabled = (state.quizMode === 'typeWord');
+      renderStatusChip(word);
     }
 
     function renderOptions(correctWord, type) {
@@ -581,13 +874,16 @@
         state.quizScore += 1;
       }
 
-      const qIdx = state.quizOrder[state.quizIndex];
-      const word = state.quizPool[qIdx];
+      const word = getCurrentQuizWord();
 
       els.quizScore.textContent = 'Score: ' + state.quizScore;
       els.quizFeedback.textContent = isCorrect ? '✅ Correct!' : '❌ Not quite.';
       els.quizFeedback.className = 'feedback ' + (isCorrect ? 'ok' : 'bad');
       els.quizAnswer.textContent = 'Answer: ' + word.term + ' – ' + word.definition;
+
+      updateWordProgressAfterAnswer(word, isCorrect);
+      renderStatusChip(word);
+      renderWordList();
 
       els.nextBtn.disabled = false;
     }
@@ -596,9 +892,7 @@
       if (state.quizAnswered) return;
       state.quizAnswered = true;
 
-      const qIdx = state.quizOrder[state.quizIndex];
-      const word = state.quizPool[qIdx];
-
+      const word = getCurrentQuizWord();
       const userAns = (els.quizInput.value || '').trim().toLowerCase();
       const correct = (word.term || '').trim().toLowerCase();
       const isCorrect = userAns && userAns === correct;
@@ -611,6 +905,10 @@
       els.quizFeedback.textContent = isCorrect ? '✅ Correct!' : '❌ Not quite.';
       els.quizFeedback.className = 'feedback ' + (isCorrect ? 'ok' : 'bad');
       els.quizAnswer.textContent = 'Answer: ' + word.term + ' – ' + word.definition;
+
+      updateWordProgressAfterAnswer(word, isCorrect);
+      renderStatusChip(word);
+      renderWordList();
 
       els.nextBtn.disabled = false;
     }
@@ -636,6 +934,5 @@
 
     window.addEventListener('DOMContentLoaded', initUI);
   </script>
-
 </body>
 </html>
